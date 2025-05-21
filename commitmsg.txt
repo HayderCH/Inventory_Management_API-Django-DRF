@@ -1,0 +1,7 @@
+feat(models): implement full inventory, supplier, order, stock, and transfer data models
+
+- Added Product, Supplier, ProductSupplier (M2M), Location, Order, OrderProduct, StockLevel, StockAdjustment, and StockTransfer models.
+- Used proper on_delete behaviors (CASCADE, PROTECT, SET_NULL) for referential integrity.
+- Standardized optional fields: blank=True for strings, blank=True/null=True for non-strings.
+- Ran migrations to generate and apply schema.
+- Updated technical documentation to reflect new model layer.

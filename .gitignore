@@ -1,8 +1,32 @@
-venv/
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.log
+
+# Django
+*.sqlite3
 db.sqlite3
+/media
+/staticfiles
+/static
 .env
 .env.*
-.flake8
-commitmsg.txt
+*.env
+.envrc
+
+# Postgres
+*.psql
+*.dump
+*.pgsql
+*.backup
+
+# VSCode
+.vscode/
