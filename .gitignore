@@ -4,3 +4,5 @@ __pycache__/
 db.sqlite3
 .env
 .env.*
+.flake8
+commitmsg.txt
