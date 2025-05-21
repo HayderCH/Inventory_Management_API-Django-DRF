@@ -21,7 +21,8 @@ db.sqlite3
 .env.*
 *.env
 .envrc
-
+.flake8
+commitmsg.txt
 # Postgres
 *.psql
 *.dump
