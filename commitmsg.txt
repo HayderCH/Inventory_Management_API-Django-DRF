@@ -1,8 +1,6 @@
-feat(api): enterprise-grade ProductSupplier ViewSet with audit logging, action-based permissions, and optimized query performance
+feat(api): add enterprise-grade default API throttling for user and anonymous clients
 
-- Implements action-based permissions (admin, manager, employee, auditor)
-- Adds full audit logging for create, update, and delete operations
-- Uses select_related for product and supplier to prevent N+1 queries
-- Supports filtering, searching, and ordering on all key business fields
-- Separates serializers for list, detail, and write actions
-- Ready for extension with bulk operations and further business logic
+- Configures global rate limits using DRF's UserRateThrottle and AnonRateThrottle
+- Sets user limit to 5000 requests per day and anonymous limit to 200 requests per day
+- Provides base protection against accidental overloads and abuse
+- Ready for fine-tuning based on real enterprise usage patterns

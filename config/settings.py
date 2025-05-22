@@ -141,4 +141,12 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
     ],
     "EXCEPTION_HANDLER": "inventory.utils.custom_exception_handler",
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.UserRateThrottle",
+        "rest_framework.throttling.AnonRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "user": "5000/day",  # Authenticated users: 5000 requests per day
+        "anon": "200/day",  # Unauthenticated: 200 requests per day (by IP)
+    },
 }
