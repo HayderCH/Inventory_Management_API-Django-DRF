@@ -66,6 +66,11 @@ class Location(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["city", "country"], name="location_city_country_idx"),
+        ]
+
     def __str__(self):
         return f"{self.name} ({self.code})"
 

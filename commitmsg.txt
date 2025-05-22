@@ -1,6 +1,5 @@
-feat(api): add enterprise-grade default API throttling for user and anonymous clients
+feat(location): add database indexes to city and country fields and composite index for city+country
 
-- Configures global rate limits using DRF's UserRateThrottle and AnonRateThrottle
-- Sets user limit to 5000 requests per day and anonymous limit to 200 requests per day
-- Provides base protection against accidental overloads and abuse
-- Ready for fine-tuning based on real enterprise usage patterns
+- Added db_index=True to city and country fields in the Location model for efficient filtering and searching on these fields.
+- Introduced a composite index on (city, country) via Meta.indexes for faster multi-field queries (e.g., filtering by both city and country together).
+- Ensured alignment with viewset filters and enterprise API performance best practices.
