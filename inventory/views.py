@@ -1,10 +1,12 @@
 from rest_framework import viewsets, permissions, filters
-import rest_framework
-from .models import AuditLog, Product
+from .models import AuditLog, Product, Supplier
 from .serializers import (
     ProductListSerializer,
     ProductDetailSerializer,
     ProductWriteSerializer,
+    SupplierDetailSerializer,
+    SupplierListSerializer,
+    SupplierWriteSerializer,
 )
 from .permissions import IsAdmin, IsManager, IsEmployee, IsAuditor
 from django_filters.rest_framework import DjangoFilterBackend
@@ -61,12 +63,13 @@ class ProductViewSet(viewsets.ModelViewSet):
         )
 
     def perform_destroy(self, instance):
+        data = ProductDetailSerializer(instance).data
         AuditLog.objects.create(
             user=self.request.user,
             action="delete",
             object_type=instance.__class__.__name__,
             object_id=instance.pk,
-            extra={"data": str(instance)},
+            extra={"data": data},
         )
         instance.delete()
 
@@ -78,4 +81,78 @@ class ProductViewSet(viewsets.ModelViewSet):
     filterset_fields = ["category", "suppliers", "price"]
     search_fields = ["name", "sku", "description"]
     ordering_fields = ["name", "price", "created_at"]
+    ordering = ["name"]
+
+
+class SupplierViewSet(viewsets.ModelViewSet):
+    queryset = Supplier.objects.all()
+
+    def get_permissions(self):
+        if self.action == "destroy":
+            return [permissions.IsAuthenticated(), IsAdmin()]
+        elif self.action in ["create", "update", "partial_update"]:
+            return [permissions.IsAuthenticated(), IsAdmin() | IsManager()]
+        elif self.action in ["list", "retrieve"]:
+            return [
+                permissions.IsAuthenticated(),
+                IsAdmin() | IsManager() | IsEmployee() | IsAuditor(),
+            ]
+        return [permissions.IsAuthenticated()]
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return SupplierListSerializer
+        elif self.action == "retrieve":
+            return SupplierDetailSerializer
+        elif self.action in ["create", "update", "partial_update"]:
+            return SupplierWriteSerializer
+        return SupplierDetailSerializer
+
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        AuditLog.objects.create(
+            user=self.request.user,
+            action="create",
+            object_type=instance.__class__.__name__,
+            object_id=instance.pk,
+            extra={"data": serializer.data},
+        )
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        AuditLog.objects.create(
+            user=self.request.user,
+            action="update",
+            object_type=instance.__class__.__name__,
+            object_id=instance.pk,
+            extra={"data": serializer.data},
+        )
+
+    def perform_destroy(self, instance):
+        data = SupplierDetailSerializer(instance).data
+        AuditLog.objects.create(
+            user=self.request.user,
+            action="delete",
+            object_type=instance.__class__.__name__,
+            object_id=instance.pk,
+            extra={"data": data},
+        )
+        instance.delete()
+
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_fields = ["country", "city", "rating", "contract_start", "contract_end"]
+    search_fields = ["name", "contact_name", "contact_email", "city", "country"]
+    ordering_fields = [
+        "name",
+        "city",
+        "country",
+        "rating",
+        "contract_start",
+        "contract_end",
+        "updated_at",
+    ]
     ordering = ["name"]
