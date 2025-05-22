@@ -9,6 +9,7 @@ from .models import (
     StockLevel,
     StockAdjustment,
     StockTransfer,
+    AuditLog,
 )
 
 
@@ -117,3 +118,10 @@ class StockTransferAdmin(admin.ModelAdmin):
     )
     search_fields = ("product__name", "from_location__name", "to_location__name")
     list_filter = ("status", "from_location", "to_location")
+
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    list_display = ("user", "action", "object_type", "object_id", "timestamp")
+    list_filter = ("action", "object_type", "user")
+    search_fields = ("object_type", "object_id", "extra")
