@@ -1,5 +1,10 @@
-feat(location): add database indexes to city and country fields and composite index for city+country
+refactor(api): improve Order and OrderProduct ViewSets with DRF best practices, audit logging, and optimized queries
 
-- Added db_index=True to city and country fields in the Location model for efficient filtering and searching on these fields.
-- Introduced a composite index on (city, country) via Meta.indexes for faster multi-field queries (e.g., filtering by both city and country together).
-- Ensured alignment with viewset filters and enterprise API performance best practices.
+- Refactored OrderViewSet and OrderProductViewSet for full DRF compliance:
+  - Switched to the correct `perform_destroy` method for deletion, using Django's `.delete()`
+  - Ensured audit logging uses detail serializers for create, update, and delete actions, capturing the full object state
+  - Enhanced queryset methods with `select_related` and `prefetch_related` for efficient N+1-safe lookups
+  - Implemented clear action-based permissions for all CRUD operations across roles (admin, manager, employee, auditor)
+  - Maintained separation of serializers for list, detail, and write actions for each ViewSet
+  - Aligned code style for clarity and maintainability
+- Overall, elevated the API's robustness, traceability, and performance for enterprise use
