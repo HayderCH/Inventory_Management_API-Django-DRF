@@ -1,6 +1,25 @@
+from datetime import datetime
 from rest_framework import serializers
+from django.contrib.auth import get_user_model
+from .models import (
+    Location,
+    Order,
+    OrderProduct,
+    Product,
+    ProductSupplier,
+    StockAdjustment,
+    StockLevel,
+    StockTransfer,
+    Supplier,
+)
 
-from .models import Location, Order, OrderProduct, Product, ProductSupplier, Supplier
+User = get_user_model()
+
+
+class LocationShortSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Location
+        fields = ("id", "name", "code")
 
 
 class SupplierShortSerializer(serializers.ModelSerializer):
@@ -13,6 +32,18 @@ class ProductShortSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ["id", "name", "sku"]
+
+
+class UserShortSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ("id", "username", "first_name", "last_name")
+
+
+class StockTransferShortSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StockTransfer
+        fields = ("id", "product", "from_location", "to_location", "quantity", "status")
 
 
 class ProductListSerializer(serializers.ModelSerializer):
@@ -164,10 +195,20 @@ class SupplierWriteSerializer(serializers.ModelSerializer):
 
     def validate_contract_end(self, value):
         contract_start = self.initial_data.get("contract_start")
-        if contract_start and value and value < contract_start:
-            raise serializers.ValidationError(
-                "Contract end cannot be before its start."
-            )
+        if contract_start and value:
+            if not isinstance(contract_start, (datetime,)):
+                try:
+                    contract_start = datetime.strptime(
+                        contract_start, "%Y-%m-%d"
+                    ).date()
+                except Exception as exc:
+                    raise serializers.ValidationError(
+                        "Invalid contract start date format."
+                    ) from exc
+            if value < contract_start:
+                raise serializers.ValidationError(
+                    "Contract end cannot be before its start."
+                )
         return value
 
 
@@ -439,7 +480,7 @@ class OrderWriteSerializer(serializers.ModelSerializer):
 
     def validate_order_number(self, value):
         value = value.upper()
-        if not value.alnum():
+        if not value.isalnum():
             raise serializers.ValidationError("Order number must be alphanumeric.")
         qs = Order.objects.filter(order_number=value)
         if self.instance:
@@ -463,3 +504,226 @@ class OrderWriteSerializer(serializers.ModelSerializer):
             for item in order_products_data:
                 OrderProduct.objects.create(order=instance, **item)
         return instance
+
+
+class StockLevelListSerializer(serializers.ModelSerializer):
+    product = ProductShortSerializer(read_only=True)
+    location = LocationListSerializer(read_only=True)
+
+    class Meta:
+        model = StockLevel
+        fields = [
+            "id",
+            "product",
+            "location",
+            "quantity",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+
+class StockLevelDetailSerializer(serializers.ModelSerializer):
+    product = ProductShortSerializer(read_only=True)
+    location = LocationListSerializer(read_only=True)
+
+    class Meta:
+        model = StockLevel
+        fields = [
+            "id",
+            "product",
+            "location",
+            "quantity",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+
+class StockLevelWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StockLevel
+        fields = [
+            "product",
+            "location",
+            "quantity",
+        ]
+
+    def validate_quantity(self, value):
+        if value < 0:
+            raise serializers.ValidationError("Quantity cannot be negative.")
+        return value
+
+    def validate(self, attrs):
+        # Ensure unique together constraint at the serializer level for early feedback
+        product = attrs.get("product")
+        location = attrs.get("location")
+        if product and location:
+            qs = StockLevel.objects.filter(product=product, location=location)
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise serializers.ValidationError(
+                    "Stock level for this product at this location already exists."
+                )
+        return attrs
+
+
+class StockAdjustmentListSerializer(serializers.ModelSerializer):
+    product = ProductShortSerializer(read_only=True)
+    location = LocationShortSerializer(read_only=True)
+    stock_transfer = StockTransferShortSerializer(read_only=True)
+    adjusted_by = UserShortSerializer(read_only=True)
+
+    class Meta:
+        model = StockAdjustment
+        fields = (
+            "id",
+            "product",
+            "location",
+            "quantity",
+            "adjustment_type",
+            "reason",
+            "stock_transfer",
+            "adjusted_by",
+            "created_at",
+        )
+        read_only_fields = fields
+
+
+class StockAdjustmentDetailSerializer(serializers.ModelSerializer):
+    product = ProductShortSerializer(read_only=True)
+    location = LocationShortSerializer(read_only=True)
+    stock_transfer = StockTransferShortSerializer(read_only=True)
+    adjusted_by = UserShortSerializer(read_only=True)
+
+    class Meta:
+        model = StockAdjustment
+        fields = (
+            "id",
+            "product",
+            "location",
+            "quantity",
+            "adjustment_type",
+            "reason",
+            "stock_transfer",
+            "adjusted_by",
+            "created_at",
+        )
+        read_only_fields = fields
+
+
+class StockAdjustmentWriteSerializer(serializers.ModelSerializer):
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+    location = serializers.PrimaryKeyRelatedField(queryset=Location.objects.all())
+    stock_transfer = serializers.PrimaryKeyRelatedField(
+        queryset=StockTransfer.objects.all(), required=False, allow_null=True
+    )
+
+    class Meta:
+        model = StockAdjustment
+        fields = (
+            "product",
+            "location",
+            "quantity",
+            "adjustment_type",
+            "reason",
+            "stock_transfer",
+        )
+
+    def validate_quantity(self, value):
+        if value == 0:
+            raise serializers.ValidationError("Quantity adjustment cannot be 0.")
+        return value
+
+    def validate(self, attrs):
+        adjustment_type = attrs.get("adjustment_type")
+        stock_transfer = attrs.get("stock_transfer")
+        if (
+            adjustment_type
+            and adjustment_type.startswith("transfer")
+            and not stock_transfer
+        ):
+            raise serializers.ValidationError(
+                "Stock transfer must be provided for transfer adjustments."
+            )
+        return attrs
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        return StockAdjustment.objects.create(adjusted_by=user, **validated_data)
+
+
+class StockTransferListSerializer(serializers.ModelSerializer):
+    product = ProductShortSerializer(read_only=True)
+    from_location = LocationShortSerializer(read_only=True)
+    to_location = LocationShortSerializer(read_only=True)
+    requested_by = UserShortSerializer(read_only=True)
+    approved_by = UserShortSerializer(read_only=True)
+
+    class Meta:
+        model = StockTransfer
+        fields = [
+            "id",
+            "product",
+            "from_location",
+            "to_location",
+            "quantity",
+            "status",
+            "reason",
+            "requested_by",
+            "approved_by",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+
+class StockTransferDetailSerializer(serializers.ModelSerializer):
+    product = ProductShortSerializer(read_only=True)
+    from_location = LocationShortSerializer(read_only=True)
+    to_location = LocationShortSerializer(read_only=True)
+    requested_by = UserShortSerializer(read_only=True)
+    approved_by = UserShortSerializer(read_only=True)
+
+    class Meta:
+        model = StockTransfer
+        fields = [
+            "id",
+            "product",
+            "from_location",
+            "to_location",
+            "quantity",
+            "status",
+            "reason",
+            "requested_by",
+            "approved_by",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+
+class StockTransferWriteSerializer(serializers.ModelSerializer):
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+    from_location = serializers.PrimaryKeyRelatedField(queryset=Location.objects.all())
+    to_location = serializers.PrimaryKeyRelatedField(queryset=Location.objects.all())
+
+    class Meta:
+        model = StockTransfer
+        fields = [
+            "product",
+            "from_location",
+            "to_location",
+            "quantity",
+            "reason",
+        ]
+
+    def validate(self, data):
+        if data.get("quantity", 0) <= 0:
+            raise serializers.ValidationError(
+                {"quantity": "Quantity must be greater than zero."}
+            )
+        if data.get("from_location") == data.get("to_location"):
+            raise serializers.ValidationError(
+                {"to_location": "Source and destination locations must be different"}
+            )

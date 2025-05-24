@@ -1,10 +1,11 @@
-refactor(api): improve Order and OrderProduct ViewSets with DRF best practices, audit logging, and optimized queries
+Implement enterprise-grade stock transfer, stock level, and stock adjustment features
 
-- Refactored OrderViewSet and OrderProductViewSet for full DRF compliance:
-  - Switched to the correct `perform_destroy` method for deletion, using Django's `.delete()`
-  - Ensured audit logging uses detail serializers for create, update, and delete actions, capturing the full object state
-  - Enhanced queryset methods with `select_related` and `prefetch_related` for efficient N+1-safe lookups
-  - Implemented clear action-based permissions for all CRUD operations across roles (admin, manager, employee, auditor)
-  - Maintained separation of serializers for list, detail, and write actions for each ViewSet
-  - Aligned code style for clarity and maintainability
-- Overall, elevated the API's robustness, traceability, and performance for enterprise use
+- Enhanced models in `inventory/models.py` for robust inventory management, including StockTransfer, StockLevel, StockAdjustment, and their related entities.
+- Refactored and expanded `inventory/serializers.py` with list, detail, and write serializers for StockTransfer, StockLevel, and StockAdjustment, featuring field-level validation and DRF best practices.
+- Added `inventory/views/stock.py`:
+  - Full-featured ViewSets for StockTransfer, StockLevel, and StockAdjustment.
+  - Filtering, searching, and ordering support across all resources.
+  - Role-based permission handling (Admin, Manager, Employee, Auditor) for all inventory operations.
+  - Audit logging for create, update, and delete actions.
+  - Transaction atomicity and queryset optimizations.
+  - Consistent serializer/view logic for maintainability and scalability.

@@ -3,8 +3,8 @@ from django.conf import settings
 
 
 class Product(models.Model):
-    name = models.CharField(max_length=255)
-    sku = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=255, db_index=True)
+    sku = models.CharField(max_length=100, unique=True, db_index=True)
     description = models.TextField(blank=True)
     category = models.CharField(max_length=100, db_index=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -21,7 +21,7 @@ class Product(models.Model):
 
 
 class Supplier(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, db_index=True)
     contact_name = models.CharField(max_length=255)
     contact_email = models.EmailField()
     contact_phone = models.CharField(max_length=50, blank=True)
@@ -88,6 +88,7 @@ class Order(models.Model):
             ("canceled", "Canceled"),
         ],
         default="pending",
+        db_index=True,
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -104,6 +105,13 @@ class OrderProduct(models.Model):
     quantity = models.PositiveIntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
 
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["order", "product"], name="orderproduct_order_product_idx"
+            ),
+        ]
+
     def __str__(self):
         return f"{self.product.name} x{self.quantity} for {self.order.order_number}"
 
@@ -111,7 +119,7 @@ class OrderProduct(models.Model):
 class StockLevel(models.Model):
     product = models.ForeignKey("Product", on_delete=models.CASCADE)
     location = models.ForeignKey("Location", on_delete=models.CASCADE)
-    quantity = models.IntegerField()
+    quantity = models.IntegerField(db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -135,7 +143,9 @@ class StockAdjustment(models.Model):
     product = models.ForeignKey("Product", on_delete=models.PROTECT)
     location = models.ForeignKey("Location", on_delete=models.PROTECT)
     quantity = models.IntegerField()
-    adjustment_type = models.CharField(max_length=20, choices=ADJUSTMENT_TYPES)
+    adjustment_type = models.CharField(
+        max_length=20, choices=ADJUSTMENT_TYPES, db_index=True
+    )
     reason = models.CharField(max_length=255, blank=True)
     stock_transfer = models.ForeignKey(
         "StockTransfer", null=True, blank=True, on_delete=models.SET_NULL
@@ -163,19 +173,23 @@ class StockTransfer(models.Model):
         "Location", related_name="transfers_in", on_delete=models.PROTECT
     )
     quantity = models.PositiveIntegerField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="pending", db_index=True
+    )
     reason = models.CharField(max_length=255, blank=True)
     requested_by = models.ForeignKey(
-        "auth.User", related_name="transfers_requested", on_delete=models.PROTECT
+        settings.AUTH_USER_MODEL,
+        related_name="transfers_requested",
+        on_delete=models.PROTECT,
     )
     approved_by = models.ForeignKey(
-        "auth.User",
+        settings.AUTH_USER_MODEL,
         related_name="transfers_approved",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
     )
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -195,10 +209,10 @@ class AuditLog(models.Model):
         blank=True,
         related_name="audit_logs",
     )
-    action = models.CharField(max_length=10, choices=ACTION_CHOICES)
-    object_type = models.CharField(max_length=50)
-    object_id = models.PositiveBigIntegerField()
-    timestamp = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES, db_index=True)
+    object_type = models.CharField(max_length=50, db_index=True)
+    object_id = models.PositiveBigIntegerField(db_index=True)
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
     extra = models.JSONField(blank=True, null=True)
 
     def __str__(self):
