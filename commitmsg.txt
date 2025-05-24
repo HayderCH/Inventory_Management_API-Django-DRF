@@ -1,13 +1,6 @@
-commit 3a2e8f4b27e8f84c7d4e4b2a4c8e123456789abc
-Author: HayderCH <your-email@example.com>
-Date:   2025-05-24 22:04:10 +0000
+Create serializers subdirectory and add modular serializer files for inventory app
 
-    Add enterprise-grade AuditLogViewSet with filtering, permissions, and best practices
-
-    - Implements AuditLogViewSet using ListModelMixin and RetrieveModelMixin for read-only access.
-    - Adds AuditLogFilter with filtering on user, action, object_type, object_id, and timestamp.
-    - Applies IsAuditLogViewer custom permission for restricted access by role (Admin, Manager, Auditor).
-    - Uses select_related for efficient user lookup.
-    - Supports ordering and search on key fields.
-    - Uses dynamic serializer class selection for list and detail.
-    - Follows DRF best practices for filtering, permissions, and efficient querying.
+- Organized all serializers into a new `serializers` subdirectory within the inventory app
+- Split serializers into logical files: product, supplier, location, order, order_product, product_supplier, stock_level, stock_adjustment, stock_transfer, audit_log, and supporting short serializers
+- Added/updated `__init__.py` to facilitate clean imports
+- Improved maintainability and code organization
