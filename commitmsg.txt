@@ -1,11 +1,13 @@
-Implement enterprise-grade stock transfer, stock level, and stock adjustment features
+commit 3a2e8f4b27e8f84c7d4e4b2a4c8e123456789abc
+Author: HayderCH <your-email@example.com>
+Date:   2025-05-24 22:04:10 +0000
 
-- Enhanced models in `inventory/models.py` for robust inventory management, including StockTransfer, StockLevel, StockAdjustment, and their related entities.
-- Refactored and expanded `inventory/serializers.py` with list, detail, and write serializers for StockTransfer, StockLevel, and StockAdjustment, featuring field-level validation and DRF best practices.
-- Added `inventory/views/stock.py`:
-  - Full-featured ViewSets for StockTransfer, StockLevel, and StockAdjustment.
-  - Filtering, searching, and ordering support across all resources.
-  - Role-based permission handling (Admin, Manager, Employee, Auditor) for all inventory operations.
-  - Audit logging for create, update, and delete actions.
-  - Transaction atomicity and queryset optimizations.
-  - Consistent serializer/view logic for maintainability and scalability.
+    Add enterprise-grade AuditLogViewSet with filtering, permissions, and best practices
+
+    - Implements AuditLogViewSet using ListModelMixin and RetrieveModelMixin for read-only access.
+    - Adds AuditLogFilter with filtering on user, action, object_type, object_id, and timestamp.
+    - Applies IsAuditLogViewer custom permission for restricted access by role (Admin, Manager, Auditor).
+    - Uses select_related for efficient user lookup.
+    - Supports ordering and search on key fields.
+    - Uses dynamic serializer class selection for list and detail.
+    - Follows DRF best practices for filtering, permissions, and efficient querying.

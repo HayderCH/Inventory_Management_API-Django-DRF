@@ -35,3 +35,16 @@ class IsAuditor(BasePermission):
             request.user.is_authenticated
             and request.user.groups.filter(name="Auditor").exists()
         )
+
+
+class IsAuditLogViewer(BasePermission):
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+        return any(
+            [
+                request.user.groups.filter(name="Admin").exists(),
+                request.user.groups.filter(name="Manager").exists(),
+                request.user.groups.filter(name="Auditor").exists(),
+            ]
+        )

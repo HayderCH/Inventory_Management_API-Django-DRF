@@ -2,6 +2,7 @@ from datetime import datetime
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import (
+    AuditLog,
     Location,
     Order,
     OrderProduct,
@@ -727,3 +728,37 @@ class StockTransferWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"to_location": "Source and destination locations must be different"}
             )
+
+
+class AuditLogListSerializer(serializers.ModelSerializer):
+    user = UserShortSerializer(read_only=True)
+
+    class Meta:
+        model = AuditLog
+        fields = [
+            "id",
+            "user",
+            "action",
+            "object_type",
+            "object_id",
+            "timestamp",
+            "extra",
+        ]
+        read_only_fields = fields
+
+
+class AuditLogDetailSerializer(serializers.ModelSerializer):
+    user = UserShortSerializer(read_only=True)
+
+    class Meta:
+        model = AuditLog
+        fields = [
+            "id",
+            "user",
+            "action",
+            "object_type",
+            "object_id",
+            "timestamp",
+            "extra",
+        ]
+        read_only_fields = fields
