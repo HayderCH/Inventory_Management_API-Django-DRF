@@ -48,3 +48,11 @@ class IsAuditLogViewer(BasePermission):
                 request.user.groups.filter(name="Auditor").exists(),
             ]
         )
+
+
+class IsAnyOf(BasePermission):
+    def __init__(self, *perms):
+        self.perms = perms
+
+    def has_permission(self, request, view):
+        return any(perm().has_permission(request, view) for perm in self.perms)

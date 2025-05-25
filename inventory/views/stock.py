@@ -1,5 +1,4 @@
-from rest_framework import viewsets, permissions, filters, status
-from rest_framework.response import Response
+from rest_framework import viewsets, permissions, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db import transaction
 from ..models import StockLevel, StockAdjustment, AuditLog, StockTransfer
@@ -14,7 +13,7 @@ from ..serializers import (
     StockTransferListSerializer,
     StockTransferWriteSerializer,
 )
-from ..permissions import IsAdmin, IsManager, IsEmployee, IsAuditor
+from ..permissions import IsAdmin, IsAnyOf, IsManager, IsEmployee, IsAuditor
 
 
 class StockLevelViewSet(viewsets.ModelViewSet):
@@ -34,12 +33,11 @@ class StockLevelViewSet(viewsets.ModelViewSet):
         if self.action == "destroy":
             return [permissions.IsAuthenticated(), IsAdmin()]
         elif self.action in ["create", "update", "partial_update"]:
-            return [permissions.IsAuthenticated(), IsAdmin() | IsManager()]
+            return [permissions.IsAuthenticated(), IsAnyOf(IsAdmin, IsManager)]
         elif self.action in ["list", "retrieve"]:
             return [
                 permissions.IsAuthenticated(),
-                IsAdmin() | IsManager() | IsEmployee(),
-                IsAuditor(),
+                IsAnyOf(IsAdmin, IsManager, IsEmployee, IsAuditor),
             ]
         return [permissions.IsAuthenticated()]
 
@@ -128,11 +126,11 @@ class StockAdjustmentViewSet(viewsets.ModelViewSet):
         if self.action == "destroy":
             return [permissions.IsAuthenticated(), IsAdmin()]
         elif self.action in ["create", "update", "partial_update"]:
-            return [permissions.IsAuthenticated(), IsAdmin() | IsManager()]
+            return [permissions.IsAuthenticated(), IsAnyOf(IsAdmin, IsManager)]
         elif self.action in ["list", "retrieve"]:
             return [
                 permissions.IsAuthenticated(),
-                IsAdmin() | IsManager() | IsEmployee() | IsAuditor(),
+                IsAnyOf(IsAdmin, IsManager, IsEmployee, IsAuditor),
             ]
         return [permissions.IsAuthenticated()]
 
@@ -208,11 +206,11 @@ class StockTransferViewSet(viewsets.ModelViewSet):
         if self.action == "destroy":
             return [permissions.IsAuthenticated(), IsAdmin()]
         elif self.action in ["create", "update", "partial_update"]:
-            return [permissions.IsAuthenticated(), IsAdmin() | IsManager()]
-        elif self.action in ["list", "retieve"]:
+            return [permissions.IsAuthenticated(), IsAnyOf(IsAdmin, IsManager)]
+        elif self.action in ["list", "retrieve"]:
             return [
                 permissions.IsAuthenticated(),
-                IsAdmin() | IsManager() | IsEmployee() | IsAuditor(),
+                IsAnyOf(IsAdmin, IsManager, IsEmployee, IsAuditor),
             ]
         return [permissions.IsAuthenticated()]
 

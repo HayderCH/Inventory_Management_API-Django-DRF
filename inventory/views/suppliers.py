@@ -7,7 +7,7 @@ from ..serializers import (
     SupplierDetailSerializer,
     SupplierWriteSerializer,
 )
-from ..permissions import IsAdmin, IsManager, IsEmployee, IsAuditor
+from ..permissions import IsAdmin, IsAnyOf, IsManager, IsEmployee, IsAuditor
 
 
 class SupplierViewSet(viewsets.ModelViewSet):
@@ -17,12 +17,9 @@ class SupplierViewSet(viewsets.ModelViewSet):
         if self.action == "destroy":
             return [permissions.IsAuthenticated(), IsAdmin()]
         elif self.action in ["create", "update", "partial_update"]:
-            return [permissions.IsAuthenticated(), IsAdmin() | IsManager()]
+            return [permissions.IsAuthenticated(), IsAnyOf(IsAdmin, IsManager)]
         elif self.action in ["list", "retrieve"]:
-            return [
-                permissions.IsAuthenticated(),
-                IsAdmin() | IsManager() | IsEmployee() | IsAuditor(),
-            ]
+            return [permissions.IsAuthenticated(), IsAnyOf(IsAdmin, IsManager, IsEmployee, IsAuditor)]
         return [permissions.IsAuthenticated()]
 
     def get_serializer_class(self):

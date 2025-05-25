@@ -11,13 +11,15 @@ from ..serializers import (
     OrderProductDetailSerializer,
     OrderProductWriteSerializer,
 )
-from ..permissions import IsAdmin, IsManager, IsEmployee, IsAuditor
+from ..permissions import IsAdmin, IsAnyOf, IsManager, IsEmployee, IsAuditor
 
 
 class OrderViewSet(viewsets.ModelViewSet):
     """
     Enterprise-grade Order ViewSet with optimized querysets, permissions, audit logging, and transaction safety.
     """
+
+    queryset = Order.objects.all()
 
     filter_backends = [
         DjangoFilterBackend,
@@ -33,11 +35,11 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == "destroy":
             return [permissions.IsAuthenticated(), IsAdmin()]
         elif self.action in ["create", "update", "partial_update"]:
-            return [permissions.IsAuthenticated(), IsAdmin() | IsManager()]
+            return [permissions.IsAuthenticated(), IsAnyOf(IsAdmin, IsManager)]
         elif self.action in ["list", "retrieve"]:
             return [
                 permissions.IsAuthenticated(),
-                IsAdmin() | IsManager() | IsEmployee() | IsAuditor(),
+                IsAnyOf(IsAdmin, IsManager, IsEmployee, IsAuditor),
             ]
         return [permissions.IsAuthenticated()]
 
@@ -94,6 +96,9 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 
 class OrderProductViewSet(viewsets.ModelViewSet):
+
+    queryset = OrderProduct.objects.all()
+
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
@@ -108,11 +113,11 @@ class OrderProductViewSet(viewsets.ModelViewSet):
         if self.action == "destroy":
             return [permissions.IsAuthenticated(), IsAdmin()]
         elif self.action in ["create", "update", "partial_update"]:
-            return [permissions.IsAuthenticated(), IsAdmin() | IsManager()]
+            return [permissions.IsAuthenticated(), IsAnyOf(IsAdmin, IsManager)]
         elif self.action in ["list", "retrieve"]:
             return [
                 permissions.IsAuthenticated(),
-                IsAdmin() | IsManager() | IsEmployee() | IsAuditor(),
+                IsAnyOf(IsAdmin, IsManager, IsEmployee, IsAuditor),
             ]
         return [permissions.IsAuthenticated()]
 
