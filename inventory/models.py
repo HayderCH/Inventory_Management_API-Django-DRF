@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-
+from django.core.validators import MinValueValidator
 
 class Product(models.Model):
     name = models.CharField(max_length=255, db_index=True)
@@ -102,7 +102,7 @@ class OrderProduct(models.Model):
         "Order", on_delete=models.CASCADE, related_name="order_products"
     )
     product = models.ForeignKey("Product", on_delete=models.PROTECT)
-    quantity = models.PositiveIntegerField()
+    quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:

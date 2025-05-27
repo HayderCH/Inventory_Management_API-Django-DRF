@@ -1,0 +1,3 @@
+# TODO: Investigate why adjustment_type missing does not raise IntegrityError. See testing notes.
+
+user update

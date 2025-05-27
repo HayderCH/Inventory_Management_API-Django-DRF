@@ -15,6 +15,7 @@ class OrderProductNestedSerializer(serializers.ModelSerializer):
             "unit_price",
         ]
 
+
 class OrderProductListSerializer(serializers.ModelSerializer):
     product = ProductShortSerializer(read_only=True)
 
@@ -51,10 +52,6 @@ class OrderProductWriteSerializer(serializers.ModelSerializer):
             "quantity",
             "unit_price",
         ]
-        extra_kwargs = {
-            "quantity": {"min_value": 1},
-            "unit_price": {"min_value": 0},
-        }
 
     def validate_quantity(self, value):
         if value < 1:
