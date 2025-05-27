@@ -64,13 +64,11 @@ This application provides:
 API Serialization Strategy
 This system uses a structured serializer approach to optimize performance and maintain clear data contracts:
 
-Serializer Type	Purpose	Example Models	Key Characteristics
-List	Minimal data for list views	Product, Supplier, Location	Only includes core fields (id,name,sku,code)
-Detail	Full object data + nested relationships	Product, Order, StockTransfer	Includes all fields + nested serializers (e.g., suppliers for Product)
-Write	Create/update operations with nested writable fields	Order, StockAdjustment	Handles nested creates/updates (e.g., OrderProducts when creating Orders)
-Short	Foreign key relationships/autocomplete	Supplier, Location	Limited fields for dropdowns (id,name,code)
-Nested	Embedded relationships in detail views	ProductSupplier, AuditLog	Used within detail serializers to show related data
-![image](https://github.com/user-attachments/assets/397af6a7-5d26-40a1-a91f-cf54fc550baf)
+-ListSerializers
+-DetailSerializers
+-WriteSerializers
+-ShortSerializers
+-NestedSerializers
 
 
 python
