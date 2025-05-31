@@ -189,7 +189,7 @@ class PasswordResetRequestView(generics.GenericAPIView):
             return Response(
                 {
                     "message": "Password reset email has been sent if the email exists.",
-                    "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+                    "timestamp": timezone.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "user_login": "System",
                 }
             )
@@ -235,7 +235,7 @@ class PasswordResetConfirmView(generics.GenericAPIView):
             return Response(
                 {
                     "error": "Invalid reset link.",
-                    "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+                    "timestamp": timezone.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "user_login": "System",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
@@ -365,6 +365,9 @@ class EmailVerificationView(generics.GenericAPIView):
 class PasswordChangeView(APIView):
     """
     View for changing user password.
+
+    Requires authentication. Validates the old password and sets the new password.
+    Optionally logs out the user from all sessions after password change.
     """
 
     permission_classes = [IsAuthenticated]
@@ -374,23 +377,26 @@ class PasswordChangeView(APIView):
         serializer = PasswordChangeSerializer(data=request.data, context={"user": user})
 
         if serializer.is_valid():
-            # Get validated data
-            old_password = serializer.validated_data["old_password"]
-            new_password = serializer.validated_data["new_password"]
-
-            # Verify old password
-            if not user.check_password(old_password):
-                return Response(
-                    {"old_password": "Old password is incorrect."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
             # Set new password
+            new_password = serializer.validated_data["new_password"]
             user.set_password(new_password)
             user.save()
 
+            # Optional: Log activity
+            # ActivityLog.objects.create(user=user, action="password_changed", ip_address=get_client_ip(request))
+
+            # Optional: Send notification email
+            # send_password_change_notification(user)
+
+            # Optional: Invalidate all tokens for this user
+            # If you're using token blacklist:
+            # OutstandingToken.objects.filter(user=user).update(blacklisted=True)
+
             return Response(
-                {"message": "Password changed successfully."}, status=status.HTTP_200_OK
+                {
+                    "message": "Password changed successfully. Please log in again with your new password."
+                },
+                status=status.HTTP_200_OK,
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -1,3 +1,4 @@
 # TODO: Investigate why adjustment_type missing does not raise IntegrityError. See testing notes.
 
 user update
+-add account lock on too many failed login attempts

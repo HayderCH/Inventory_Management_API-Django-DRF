@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User, Group
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from datetime import datetime
+from datetime import datetime, timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
@@ -31,7 +31,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data["user"] = UserSerializer(self.user).data
 
         # Add timestamp in the specified format
-        data["timestamp"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        data["timestamp"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         data["user_login"] = self.user.username
 
         return data
@@ -358,26 +358,59 @@ def validate_password_strength(password):
 
 
 class PasswordChangeSerializer(serializers.Serializer):
-    old_password = serializers.CharField(required=True)
-    new_password = serializers.CharField(required=True)
-    confirm_password = serializers.CharField(required=True)
+    """
+    Serializer for handling password change requests.
 
-    def validate(self, data):
+    Validates old password correctness, new password strength,
+    and that confirmation password matches.
+    """
+
+    old_password = serializers.CharField(
+        required=True, style={"input_type": "password"}
+    )
+    new_password = serializers.CharField(
+        required=True, style={"input_type": "password"}
+    )
+    confirm_password = serializers.CharField(
+        required=True, style={"input_type": "password"}
+    )
+
+    def validate_old_password(self, value):
+        """Validate that the old password is correct."""
+        user = self.context.get("user")
+        if user and not user.check_password(value):
+            raise serializers.ValidationError("Old password is incorrect.")
+        return value
+
+    def validate(self, attrs):
         # Check if passwords match
-        if data["new_password"] != data["confirm_password"]:
-            raise serializers.ValidationError("New passwords don't match.")
+        if attrs["new_password"] != attrs["confirm_password"]:
+            raise serializers.ValidationError(
+                {"confirm_password": "New passwords don't match."}
+            )
 
         # Check if new password is same as old password
-        user = self.context.get("user")
-        if user and user.check_password(data["new_password"]):
+        if attrs["new_password"] == attrs["old_password"]:
             raise serializers.ValidationError(
                 {"new_password": "New password must be different from old password."}
             )
 
         # Validate password strength
-        validate_password_strength(data["new_password"])
+        validate_password_strength(attrs["new_password"])
 
-        return data
+        return attrs
+
+    def create(self, validated_data):
+        """Not implemented as this serializer is only used for validation."""
+        raise NotImplementedError(
+            "PasswordChangeSerializer create method is not implemented."
+        )
+
+    def update(self, instance, validated_data):
+        """Not implemented as this serializer is only used for validation."""
+        raise NotImplementedError(
+            "PasswordChangeSerializer update method is not implemented."
+        )
 
 
 class UserLoginAttemptSerializer(serializers.ModelSerializer):

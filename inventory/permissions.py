@@ -2,7 +2,6 @@ from rest_framework.permissions import BasePermission
 
 
 class IsAdmin(BasePermission):
-
     def has_permission(self, request, view):
         return (
             request.user.is_authenticated
@@ -11,7 +10,6 @@ class IsAdmin(BasePermission):
 
 
 class IsManager(BasePermission):
-
     def has_permission(self, request, view):
         return (
             request.user.is_authenticated
@@ -20,7 +18,6 @@ class IsManager(BasePermission):
 
 
 class IsEmployee(BasePermission):
-
     def has_permission(self, request, view):
         return (
             request.user.is_authenticated
@@ -29,7 +26,6 @@ class IsEmployee(BasePermission):
 
 
 class IsAuditor(BasePermission):
-
     def has_permission(self, request, view):
         return (
             request.user.is_authenticated
